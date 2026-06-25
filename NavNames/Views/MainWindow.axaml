@@ -1,0 +1,70 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:NavNames.ViewModels"
+        x:Class="NavNames.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="820" Height="660"
+        MinWidth="640" MinHeight="480"
+        Title="NavNames"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,12">
+            <TextBlock Text="NavNames" FontSize="24" FontWeight="SemiBold" />
+            <TextBlock Text="Name your folders once, jump to them from any shell."
+                       Opacity="0.7" />
+        </StackPanel>
+
+        <!-- Target profile path -->
+        <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,12">
+            <TextBlock Text="Target PowerShell profile" FontWeight="SemiBold" />
+            <TextBox Text="{Binding ProfilePath}"
+                     ToolTip.Tip="The managed block is written here. Point at a temp file to test safely first." />
+        </StackPanel>
+
+        <!-- Toolbar -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+            <Button Content="Add shortcut" Command="{Binding AddCommand}" />
+            <Button Content="Save &amp; apply to profile"
+                    Command="{Binding SaveCommand}"
+                    Classes="accent" />
+        </StackPanel>
+
+        <!-- Shortcut rows -->
+        <Border Grid.Row="3" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1" CornerRadius="6" Padding="8">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Shortcuts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ShortcutItemViewModel">
+                            <Grid ColumnDefinitions="160,*,Auto,Auto" Margin="0,4">
+                                <TextBox Grid.Column="0" Text="{Binding Name}"
+                                         PlaceholderText="name" Margin="0,0,8,0" />
+                                <TextBox Grid.Column="1" Text="{Binding Path}"
+                                         PlaceholderText="folder path" Margin="0,0,8,0" />
+                                <Button Grid.Column="2" Content="Browse..."
+                                        Command="{Binding BrowseCommand}" Margin="0,0,8,0" />
+                                <Button Grid.Column="3" Content="Remove"
+                                        Command="{Binding RemoveCommand}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Generated preview -->
+        <Expander Grid.Row="4" Header="Generated PowerShell preview" Margin="0,12,0,0">
+            <TextBox Text="{Binding GeneratedPreview, Mode=OneWay}"
+                     IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+                     FontFamily="Cascadia Code,Consolas,Menlo,monospace"
+                     MaxHeight="220" />
+        </Expander>
+
+        <!-- Status -->
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}"
+                   TextWrapping="Wrap" Margin="0,12,0,0" Opacity="0.85" />
+    </Grid>
+</Window>

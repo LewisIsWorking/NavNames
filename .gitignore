@@ -1,0 +1,20 @@
+## .NET / Visual Studio / Rider
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+
+## Build output
+[Dd]ebug/
+[Rr]elease/
+publish/
+artifacts/
+
+## Velopack (fast-follow packaging)
+Releases/
+
+## OS
+Thumbs.db
+.DS_Store
