@@ -50,10 +50,18 @@ dotnet test  NavNames.slnx
 dotnet run --project NavNames\NavNames.csproj
 ```
 
+## Targets
+
+Pick a **target shell** in the app; each is an `IShellConfigGenerator`:
+
+- **PowerShell** — `$NavNames` map, `proj` dispatcher + tab-completion, bare-word functions, `info` table.
+- **Bash / Zsh** — associative `NAVNAMES` array, `proj`, bare-word functions, completion.
+- **Zoxide (seed)** — `zoxide add` lines so `z <name>` jumps to your curated folders.
+
+Use **Import from profile** to adopt shortcuts already defined in a `$NavNames`/`$Workspaces` block.
+Releases are built with `scripts/release.ps1` (Velopack → `Setup.exe`).
+
 ## Roadmap (fast-follow)
 
-- Additional generators behind `IShellConfigGenerator`: bash/zsh aliases, a `zoxide` seed export.
-- Velopack packaging + tag-driven release workflow.
-- Import an existing hand-written block to bootstrap `shortcuts.json`.
-
-Currently targets **PowerShell**; the `IShellConfigGenerator` seam keeps other shells a small addition.
+- Auto-update on startup (install/update hooks are already wired via Velopack).
+- Linux/macOS packaging (the app already builds cross-platform).

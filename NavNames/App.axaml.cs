@@ -47,11 +47,12 @@ public partial class App : Application
         services.AddSingleton<IShortcutImporter, ShortcutImporter>();
         services.AddSingleton<IFolderPickerService, AvaloniaFolderPickerService>();
 
-        // One entry per supported shell; the first is the default selection.
+        // One entry per supported target; the first is the default selection.
         services.AddSingleton<IReadOnlyList<ShellTarget>>(_ =>
         [
             new ShellTarget("PowerShell", new PowerShellConfigGenerator(), new PowerShellProfileLocator()),
-            new ShellTarget("Bash / Zsh", new BashConfigGenerator(), new BashProfileLocator())
+            new ShellTarget("Bash / Zsh", new BashConfigGenerator(), new BashProfileLocator()),
+            new ShellTarget("Zoxide (seed)", new ZoxideConfigGenerator(), new PowerShellProfileLocator())
         ]);
 
         services.AddTransient<MainWindowViewModel>();
