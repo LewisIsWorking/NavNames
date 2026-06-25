@@ -22,6 +22,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IManagedBlockWriter _writer;
     private readonly IShortcutValidator _validator;
     private readonly IFolderPickerService _folderPicker;
+    private readonly IFileSystem _fileSystem;
+    private readonly IShortcutImporter _importer;
 
     public ObservableCollection<ShortcutItemViewModel> Shortcuts { get; } = [];
 
@@ -37,12 +39,16 @@ public partial class MainWindowViewModel : ViewModelBase
         IReadOnlyList<ShellTarget> shellTargets,
         IManagedBlockWriter writer,
         IShortcutValidator validator,
-        IFolderPickerService folderPicker)
+        IFolderPickerService folderPicker,
+        IFileSystem fileSystem,
+        IShortcutImporter importer)
     {
         _store = store;
         _writer = writer;
         _validator = validator;
         _folderPicker = folderPicker;
+        _fileSystem = fileSystem;
+        _importer = importer;
 
         ShellTargets = shellTargets;
         _selectedShellTarget = shellTargets[0];
@@ -66,6 +72,36 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         Shortcuts.Add(NewItem());
         RefreshPreview();
+    }
+
+    // Adopt shortcuts already defined in the target profile (e.g. a hand-written
+    // $Workspaces block), merging in only names we don't already have.
+    [RelayCommand]
+    private void ImportFromProfile()
+    {
+        if (!_fileSystem.FileExists(ProfilePath))
+        {
+            StatusMessage = $"No profile found at {ProfilePath}.";
+            return;
+        }
+
+        var existing = new HashSet<string>(
+            Shortcuts.Select(s => s.Name), StringComparer.OrdinalIgnoreCase);
+
+        var added = 0;
+        foreach (var imported in _importer.Import(_fileSystem.ReadAllText(ProfilePath)))
+        {
+            if (!existing.Add(imported.Name))
+                continue;
+
+            Shortcuts.Add(NewItem(imported.Name, imported.Path));
+            added++;
+        }
+
+        RefreshPreview();
+        StatusMessage = added > 0
+            ? $"Imported {added} new shortcut(s) from {ProfilePath}."
+            : $"No new shortcuts found in {ProfilePath}.";
     }
 
     [RelayCommand]

@@ -44,6 +44,7 @@ public partial class App : Application
             new JsonShortcutStore(sp.GetRequiredService<IFileSystem>()));
         services.AddSingleton<IManagedBlockWriter, ManagedBlockWriter>();
         services.AddSingleton<IShortcutValidator, ShortcutValidator>();
+        services.AddSingleton<IShortcutImporter, ShortcutImporter>();
         services.AddSingleton<IFolderPickerService, AvaloniaFolderPickerService>();
 
         // One entry per supported shell; the first is the default selection.
