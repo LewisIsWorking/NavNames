@@ -17,12 +17,20 @@
                        Opacity="0.7" />
         </StackPanel>
 
-        <!-- Target profile path -->
-        <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,12">
-            <TextBlock Text="Target PowerShell profile" FontWeight="SemiBold" />
-            <TextBox Text="{Binding ProfilePath}"
-                     ToolTip.Tip="The managed block is written here. Point at a temp file to test safely first." />
-        </StackPanel>
+        <!-- Target shell + profile path -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,0,0,12" ColumnSpacing="12">
+            <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock Text="Target shell" FontWeight="SemiBold" />
+                <ComboBox MinWidth="150"
+                          ItemsSource="{Binding ShellTargets}"
+                          SelectedItem="{Binding SelectedShellTarget}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="4">
+                <TextBlock Text="Target profile" FontWeight="SemiBold" />
+                <TextBox Text="{Binding ProfilePath}"
+                         ToolTip.Tip="The managed block is written here. Point at a temp file to test safely first." />
+            </StackPanel>
+        </Grid>
 
         <!-- Toolbar -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">

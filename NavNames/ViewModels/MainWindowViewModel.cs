@@ -12,41 +12,52 @@ using NavNames.Services.Interfaces;
 namespace NavNames.ViewModels;
 
 /// <summary>
-/// Root ViewModel: edits the shortcut list, regenerates a live PowerShell preview,
-/// and on Save validates -> persists JSON -> writes the managed block into the profile.
+/// Root ViewModel: edits the shortcut list, regenerates a live preview for the
+/// selected target shell, and on Save validates -> persists JSON -> writes the
+/// managed block into that shell's profile.
 /// </summary>
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IShortcutStore _store;
-    private readonly IShellConfigGenerator _generator;
     private readonly IManagedBlockWriter _writer;
     private readonly IShortcutValidator _validator;
     private readonly IFolderPickerService _folderPicker;
 
     public ObservableCollection<ShortcutItemViewModel> Shortcuts { get; } = [];
 
+    public IReadOnlyList<ShellTarget> ShellTargets { get; }
+
+    [ObservableProperty] private ShellTarget _selectedShellTarget;
     [ObservableProperty] private string _profilePath;
     [ObservableProperty] private string _generatedPreview = string.Empty;
     [ObservableProperty] private string _statusMessage = string.Empty;
 
     public MainWindowViewModel(
         IShortcutStore store,
-        IShellConfigGenerator generator,
+        IReadOnlyList<ShellTarget> shellTargets,
         IManagedBlockWriter writer,
         IShortcutValidator validator,
-        IProfileLocator profileLocator,
         IFolderPickerService folderPicker)
     {
         _store = store;
-        _generator = generator;
         _writer = writer;
         _validator = validator;
         _folderPicker = folderPicker;
-        _profilePath = profileLocator.ResolveProfilePath();
+
+        ShellTargets = shellTargets;
+        _selectedShellTarget = shellTargets[0];
+        _profilePath = _selectedShellTarget.Locator.ResolveProfilePath();
 
         foreach (var saved in _store.Load())
             Shortcuts.Add(NewItem(saved.Name, saved.Path));
 
+        RefreshPreview();
+    }
+
+    // Switching shells retargets the profile path and regenerates the preview.
+    partial void OnSelectedShellTargetChanged(ShellTarget value)
+    {
+        ProfilePath = value.Locator.ResolveProfilePath();
         RefreshPreview();
     }
 
@@ -69,7 +80,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _store.Save(models);
-        _writer.Write(ProfilePath, _generator.Generate(models));
+        _writer.Write(ProfilePath, SelectedShellTarget.Generator.Generate(models));
         StatusMessage =
             $"Saved {models.Count} shortcut(s) to {ProfilePath}. Open a new terminal to use them.";
     }
@@ -106,7 +117,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private IReadOnlyList<NavShortcut> CurrentModels() =>
         Shortcuts.Select(s => s.ToModel()).ToList();
 
-    private void RefreshPreview() => GeneratedPreview = _generator.Generate(CurrentModels());
+    private void RefreshPreview() =>
+        GeneratedPreview = SelectedShellTarget.Generator.Generate(CurrentModels());
 
     // Suggest a shortcut name from a folder's leaf, e.g. "...\RiderProjects" -> "riderprojects".
     private static string SuggestName(string folderPath)

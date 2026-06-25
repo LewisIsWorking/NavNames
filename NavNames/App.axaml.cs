@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using NavNames.Core.Models;
 using NavNames.Core.Services;
 using NavNames.Core.Services.Interfaces;
 using NavNames.Services;
@@ -41,11 +42,16 @@ public partial class App : Application
         services.AddSingleton<IFileSystem, SystemFileSystem>();
         services.AddSingleton<IShortcutStore>(sp =>
             new JsonShortcutStore(sp.GetRequiredService<IFileSystem>()));
-        services.AddSingleton<IShellConfigGenerator, PowerShellConfigGenerator>();
         services.AddSingleton<IManagedBlockWriter, ManagedBlockWriter>();
-        services.AddSingleton<IProfileLocator, PowerShellProfileLocator>();
         services.AddSingleton<IShortcutValidator, ShortcutValidator>();
         services.AddSingleton<IFolderPickerService, AvaloniaFolderPickerService>();
+
+        // One entry per supported shell; the first is the default selection.
+        services.AddSingleton<IReadOnlyList<ShellTarget>>(_ =>
+        [
+            new ShellTarget("PowerShell", new PowerShellConfigGenerator(), new PowerShellProfileLocator()),
+            new ShellTarget("Bash / Zsh", new BashConfigGenerator(), new BashProfileLocator())
+        ]);
 
         services.AddTransient<MainWindowViewModel>();
 
