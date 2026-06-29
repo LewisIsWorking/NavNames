@@ -1,31 +1,30 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.IO;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NavNames.Core.Models;
 using NavNames.Core.Services.Interfaces;
-using NavNames.Services.Interfaces;
 
 namespace NavNames.ViewModels;
 
 /// <summary>
-/// Root ViewModel: edits the shortcut list, regenerates a live preview for the
-/// selected target shell, and on Save validates -> persists JSON -> writes the
-/// managed block into that shell's profile.
+/// Root coordinator: owns the shell-target choice, profile path, live preview and
+/// status, and delegates the two editable lists to <see cref="Shortcuts"/> and
+/// <see cref="Commands"/>. On Save it validates both, persists each store, and writes
+/// the combined managed block (directory helpers + command helpers) into the profile.
 /// </summary>
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IShortcutStore _store;
+    private readonly ICommandStore _commandStore;
     private readonly IManagedBlockWriter _writer;
     private readonly IShortcutValidator _validator;
-    private readonly IFolderPickerService _folderPicker;
     private readonly IFileSystem _fileSystem;
     private readonly IShortcutImporter _importer;
 
-    public ObservableCollection<ShortcutItemViewModel> Shortcuts { get; } = [];
+    public ShortcutsSectionViewModel Shortcuts { get; }
+    public CommandsSectionViewModel Commands { get; }
 
     public IReadOnlyList<ShellTarget> ShellTargets { get; }
 
@@ -36,26 +35,33 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         IShortcutStore store,
+        ICommandStore commandStore,
         IReadOnlyList<ShellTarget> shellTargets,
         IManagedBlockWriter writer,
         IShortcutValidator validator,
-        IFolderPickerService folderPicker,
         IFileSystem fileSystem,
-        IShortcutImporter importer)
+        IShortcutImporter importer,
+        ShortcutsSectionViewModel shortcuts,
+        CommandsSectionViewModel commands)
     {
         _store = store;
+        _commandStore = commandStore;
         _writer = writer;
         _validator = validator;
-        _folderPicker = folderPicker;
         _fileSystem = fileSystem;
         _importer = importer;
+
+        Shortcuts = shortcuts;
+        Commands = commands;
+        Shortcuts.Changed += (_, _) => RefreshPreview();
+        Commands.Changed += (_, _) => RefreshPreview();
 
         ShellTargets = shellTargets;
         _selectedShellTarget = shellTargets[0];
         _profilePath = _selectedShellTarget.Locator.ResolveProfilePath();
 
-        foreach (var saved in _store.Load())
-            Shortcuts.Add(NewItem(saved.Name, saved.Path));
+        Shortcuts.Load(_store.Load());
+        Commands.Load(_commandStore.Load());
 
         RefreshPreview();
     }
@@ -67,15 +73,8 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshPreview();
     }
 
-    [RelayCommand]
-    private void Add()
-    {
-        Shortcuts.Add(NewItem());
-        RefreshPreview();
-    }
-
-    // Adopt shortcuts already defined in the target profile (e.g. a hand-written
-    // $Workspaces block), merging in only names we don't already have.
+    // Adopt directory shortcuts already defined in the target profile (e.g. a
+    // hand-written $Workspaces block), merging in only names we don't already have.
     [RelayCommand]
     private void ImportFromProfile()
     {
@@ -85,20 +84,7 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        var existing = new HashSet<string>(
-            Shortcuts.Select(s => s.Name), StringComparer.OrdinalIgnoreCase);
-
-        var added = 0;
-        foreach (var imported in _importer.Import(_fileSystem.ReadAllText(ProfilePath)))
-        {
-            if (!existing.Add(imported.Name))
-                continue;
-
-            Shortcuts.Add(NewItem(imported.Name, imported.Path));
-            added++;
-        }
-
-        RefreshPreview();
+        var added = Shortcuts.Merge(_importer.Import(_fileSystem.ReadAllText(ProfilePath)));
         StatusMessage = added > 0
             ? $"Imported {added} new shortcut(s) from {ProfilePath}."
             : $"No new shortcuts found in {ProfilePath}.";
@@ -107,60 +93,37 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
-        var models = CurrentModels();
-        var errors = _validator.Validate(models);
+        var shortcutModels = Shortcuts.Models();
+        var commandModels = Commands.Models();
+
+        var errors = _validator.Validate(shortcutModels, commandModels);
         if (errors.Count > 0)
         {
             StatusMessage = "Cannot save: " + string.Join(" ", errors);
             return;
         }
 
-        _store.Save(models);
-        _writer.Write(ProfilePath, SelectedShellTarget.Generator.Generate(models));
+        _store.Save(shortcutModels);
+        _commandStore.Save(commandModels);
+        _writer.Write(ProfilePath, ComposeScript(shortcutModels, commandModels));
+
         StatusMessage =
-            $"Saved {models.Count} shortcut(s) to {ProfilePath}. Open a new terminal to use them.";
+            $"Saved {shortcutModels.Count} shortcut(s) and {commandModels.Count} command(s) to " +
+            $"{ProfilePath}. Open a new terminal to use them.";
     }
-
-    private ShortcutItemViewModel NewItem(string name = "", string path = "")
-    {
-        var item = new ShortcutItemViewModel(name, path, RemoveItem, BrowseItemAsync);
-        item.PropertyChanged += OnItemChanged;
-        return item;
-    }
-
-    private void RemoveItem(ShortcutItemViewModel item)
-    {
-        item.PropertyChanged -= OnItemChanged;
-        Shortcuts.Remove(item);
-        RefreshPreview();
-    }
-
-    private async Task BrowseItemAsync(ShortcutItemViewModel item)
-    {
-        var folder = await _folderPicker.PickFolderAsync();
-        if (folder is null)
-            return;
-
-        item.Path = folder;
-        if (string.IsNullOrWhiteSpace(item.Name))
-            item.Name = SuggestName(folder);
-
-        RefreshPreview();
-    }
-
-    private void OnItemChanged(object? sender, PropertyChangedEventArgs e) => RefreshPreview();
-
-    private IReadOnlyList<NavShortcut> CurrentModels() =>
-        Shortcuts.Select(s => s.ToModel()).ToList();
 
     private void RefreshPreview() =>
-        GeneratedPreview = SelectedShellTarget.Generator.Generate(CurrentModels());
+        GeneratedPreview = ComposeScript(Shortcuts.Models(), Commands.Models());
 
-    // Suggest a shortcut name from a folder's leaf, e.g. "...\RiderProjects" -> "riderprojects".
-    private static string SuggestName(string folderPath)
+    // Directory helpers first, then command helpers (blank-line separated when both exist).
+    private string ComposeScript(
+        IReadOnlyList<NavShortcut> shortcuts, IReadOnlyList<NavCommand> commands)
     {
-        var leaf = Path.GetFileName(
-            folderPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        return leaf.ToLowerInvariant();
+        var generator = SelectedShellTarget.Generator;
+        var dirs = generator.Generate(shortcuts);
+        var cmds = generator.GenerateCommands(commands);
+        return string.IsNullOrEmpty(cmds)
+            ? dirs
+            : dirs + Environment.NewLine + Environment.NewLine + cmds;
     }
 }

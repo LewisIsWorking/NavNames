@@ -3,17 +3,17 @@
         xmlns:vm="using:NavNames.ViewModels"
         x:Class="NavNames.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="820" Height="660"
-        MinWidth="640" MinHeight="480"
+        Width="820" Height="760"
+        MinWidth="640" MinHeight="540"
         Title="NavNames"
         WindowStartupLocation="CenterScreen">
 
-    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,*,Auto,Auto">
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,12">
             <TextBlock Text="NavNames" FontSize="24" FontWeight="SemiBold" />
-            <TextBlock Text="Name your folders once, jump to them from any shell."
+            <TextBlock Text="Name your folders and commands once, use them from any shell."
                        Opacity="0.7" />
         </StackPanel>
 
@@ -34,20 +34,23 @@
 
         <!-- Toolbar -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-            <Button Content="Add shortcut" Command="{Binding AddCommand}" />
             <Button Content="Import from profile"
                     Command="{Binding ImportFromProfileCommand}"
-                    ToolTip.Tip="Adopt shortcuts already defined in the target profile (e.g. a hand-written $Workspaces block)." />
+                    ToolTip.Tip="Adopt folder shortcuts already defined in the target profile (e.g. a hand-written $Workspaces block)." />
             <Button Content="Save &amp; apply to profile"
                     Command="{Binding SaveCommand}"
                     Classes="accent" />
         </StackPanel>
 
-        <!-- Shortcut rows -->
-        <Border Grid.Row="3" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+        <!-- Folder shortcuts section -->
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,4,0,4">
+            <TextBlock Grid.Column="0" Text="Folder shortcuts" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Content="Add shortcut" Command="{Binding Shortcuts.AddCommand}" />
+        </Grid>
+        <Border Grid.Row="4" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="1" CornerRadius="6" Padding="8">
             <ScrollViewer>
-                <ItemsControl ItemsSource="{Binding Shortcuts}">
+                <ItemsControl ItemsSource="{Binding Shortcuts.Items}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:ShortcutItemViewModel">
                             <Grid ColumnDefinitions="160,*,Auto,Auto" Margin="0,4">
@@ -66,8 +69,38 @@
             </ScrollViewer>
         </Border>
 
+        <!-- Command shortcuts section -->
+        <Grid Grid.Row="5" ColumnDefinitions="*,Auto" Margin="0,12,0,4">
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="Command shortcuts" FontWeight="SemiBold" />
+                <TextBlock Text="Type the name to run the command; extra arguments are forwarded."
+                           Opacity="0.7" FontSize="12" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Add command" Command="{Binding Commands.AddCommand}" />
+        </Grid>
+        <Border Grid.Row="6" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1" CornerRadius="6" Padding="8">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Commands.Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CommandItemViewModel">
+                            <Grid ColumnDefinitions="160,*,Auto" Margin="0,4">
+                                <TextBox Grid.Column="0" Text="{Binding Name}"
+                                         PlaceholderText="name" Margin="0,0,8,0" />
+                                <TextBox Grid.Column="1" Text="{Binding Command}"
+                                         PlaceholderText="command, e.g. python &quot;C:\tools\bot.py&quot;"
+                                         FontFamily="Cascadia Code,Consolas,Menlo,monospace" Margin="0,0,8,0" />
+                                <Button Grid.Column="2" Content="Remove"
+                                        Command="{Binding RemoveCommand}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
         <!-- Generated preview -->
-        <Expander Grid.Row="4" Header="Generated PowerShell preview" Margin="0,12,0,0">
+        <Expander Grid.Row="7" Header="Generated preview" Margin="0,12,0,0">
             <TextBox Text="{Binding GeneratedPreview, Mode=OneWay}"
                      IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
                      FontFamily="Cascadia Code,Consolas,Menlo,monospace"
@@ -75,7 +108,7 @@
         </Expander>
 
         <!-- Status -->
-        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}"
+        <TextBlock Grid.Row="8" Text="{Binding StatusMessage}"
                    TextWrapping="Wrap" Margin="0,12,0,0" Opacity="0.85" />
     </Grid>
 </Window>

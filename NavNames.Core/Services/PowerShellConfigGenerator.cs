@@ -28,6 +28,23 @@ public sealed class PowerShellConfigGenerator : IShellConfigGenerator
         return sb.ToString();
     }
 
+    public string GenerateCommands(IReadOnlyList<NavCommand> commands)
+    {
+        if (commands.Count == 0)
+            return string.Empty;
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine("$NavCommands = [ordered]@{");
+        foreach (var command in commands)
+            sb.AppendLine($"    {command.Name} = '{EscapeSingleQuotes(command.Command)}'");
+        sb.AppendLine("}");
+        sb.AppendLine();
+        sb.Append(CommandHelpers);
+
+        return sb.ToString();
+    }
+
     // PowerShell single-quoted strings escape a quote by doubling it.
     private static string EscapeSingleQuotes(string value) => value.Replace("'", "''");
 
@@ -71,5 +88,23 @@ public sealed class PowerShellConfigGenerator : IShellConfigGenerator
         }
         function info      { Show-NavNames }
         function shortcuts { Show-NavNames }
+        """;
+
+    private const string CommandHelpers =
+        """
+        # One bare-word function per command. The command text is baked into the
+        # scriptblock and @args forwards any extra arguments you pass.
+        foreach ($key in $NavCommands.Keys) {
+            Set-Item "function:global:$key" ([scriptblock]::Create("$($NavCommands[$key]) @args"))
+        }
+
+        # cmds / commands -> print every command shortcut and what it runs.
+        function Show-NavCommands {
+            $NavCommands.GetEnumerator() | ForEach-Object {
+                [pscustomobject]@{ Command = $_.Key; Runs = $_.Value }
+            } | Format-Table -AutoSize
+        }
+        function cmds     { Show-NavCommands }
+        function commands { Show-NavCommands }
         """;
 }

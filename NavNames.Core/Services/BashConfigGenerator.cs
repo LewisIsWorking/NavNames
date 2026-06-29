@@ -31,6 +31,27 @@ public sealed class BashConfigGenerator : IShellConfigGenerator
         return sb.ToString();
     }
 
+    public string GenerateCommands(IReadOnlyList<NavCommand> commands)
+    {
+        if (commands.Count == 0)
+            return string.Empty;
+
+        var sb = new StringBuilder();
+
+        sb.Append("NAVCOMMANDS_KEYS=(");
+        sb.Append(string.Join(' ', commands.Select(c => Quote(c.Name))));
+        sb.AppendLine(")");
+
+        sb.AppendLine("declare -A NAVCOMMANDS=(");
+        foreach (var command in commands)
+            sb.AppendLine($"    [{Quote(command.Name)}]={Quote(command.Command)}");
+        sb.AppendLine(")");
+        sb.AppendLine();
+        sb.Append(CommandHelpers);
+
+        return sb.ToString();
+    }
+
     // Bash single-quote escaping: close quote, emit an escaped quote, reopen.
     private static string Quote(string value) => "'" + value.Replace("'", "'\\''") + "'";
 
@@ -68,5 +89,24 @@ public sealed class BashConfigGenerator : IShellConfigGenerator
 
         info() { proj; }
         shortcuts() { proj; }
+        """;
+
+    private const string CommandHelpers =
+        """
+        # One bare-word function per command; the array lookup runs at call time and
+        # "$@" forwards any extra arguments you pass.
+        for _nc_key in "${NAVCOMMANDS_KEYS[@]}"; do
+            eval "${_nc_key}() { eval \"\${NAVCOMMANDS[${_nc_key}]}\" \"\$@\"; }"
+        done
+        unset _nc_key
+
+        # cmds / commands -> print every command shortcut and what it runs.
+        cmds() {
+            local k
+            for k in "${NAVCOMMANDS_KEYS[@]}"; do
+                printf '%-16s %s\n' "$k" "${NAVCOMMANDS[$k]}"
+            done
+        }
+        commands() { cmds; }
         """;
 }

@@ -61,4 +61,34 @@ public class BashConfigGeneratorTests
         Assert.Contains("NAVNAMES_KEYS=()", script);
         Assert.Contains("proj() {", script);
     }
+
+    [Fact]
+    public void GenerateCommands_EmptyList_ReturnsEmptyString()
+    {
+        Assert.Equal(string.Empty, _sut.GenerateCommands([]));
+    }
+
+    [Fact]
+    public void GenerateCommands_EmitsKeysArrayMapAndRunLoop()
+    {
+        var script = _sut.GenerateCommands([
+            new NavCommand("bridge", "python /home/lewis/voice_bridge.py")
+        ]);
+
+        Assert.Contains("NAVCOMMANDS_KEYS=('bridge')", script);
+        Assert.Contains("declare -A NAVCOMMANDS=(", script);
+        Assert.Contains("['bridge']='python /home/lewis/voice_bridge.py'", script);
+        Assert.Contains("for _nc_key in \"${NAVCOMMANDS_KEYS[@]}\"", script);
+        // "$@" forwards extra arguments to the saved command.
+        Assert.Contains("\"$@\"", script);
+    }
+
+    [Fact]
+    public void GenerateCommands_IncludesCmdsListing()
+    {
+        var script = _sut.GenerateCommands([new NavCommand("bridge", "python x.py")]);
+
+        Assert.Contains("cmds() {", script);
+        Assert.Contains("commands() { cmds; }", script);
+    }
 }

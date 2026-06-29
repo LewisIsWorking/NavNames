@@ -13,7 +13,7 @@ public class ShortcutValidatorTests
         var errors = _sut.Validate([
             new NavShortcut("rider", @"C:\a"),
             new NavShortcut("web-2", @"C:\b")
-        ]);
+        ], []);
 
         Assert.Empty(errors);
     }
@@ -21,7 +21,7 @@ public class ShortcutValidatorTests
     [Fact]
     public void Validate_EmptyName_ReportsError()
     {
-        var errors = _sut.Validate([new NavShortcut("  ", @"C:\a")]);
+        var errors = _sut.Validate([new NavShortcut("  ", @"C:\a")], []);
 
         Assert.Contains(errors, e => e.Contains("empty name"));
     }
@@ -29,7 +29,7 @@ public class ShortcutValidatorTests
     [Fact]
     public void Validate_NameStartingWithDigit_ReportsError()
     {
-        var errors = _sut.Validate([new NavShortcut("2cool", @"C:\a")]);
+        var errors = _sut.Validate([new NavShortcut("2cool", @"C:\a")], []);
 
         Assert.Contains(errors, e => e.Contains("not a valid name"));
     }
@@ -37,7 +37,7 @@ public class ShortcutValidatorTests
     [Fact]
     public void Validate_NameWithSpaces_ReportsError()
     {
-        var errors = _sut.Validate([new NavShortcut("my folder", @"C:\a")]);
+        var errors = _sut.Validate([new NavShortcut("my folder", @"C:\a")], []);
 
         Assert.Contains(errors, e => e.Contains("not a valid name"));
     }
@@ -48,7 +48,7 @@ public class ShortcutValidatorTests
         var errors = _sut.Validate([
             new NavShortcut("Rider", @"C:\a"),
             new NavShortcut("rider", @"C:\b")
-        ]);
+        ], []);
 
         Assert.Contains(errors, e => e.Contains("Duplicate"));
     }
@@ -56,8 +56,44 @@ public class ShortcutValidatorTests
     [Fact]
     public void Validate_EmptyPath_ReportsError()
     {
-        var errors = _sut.Validate([new NavShortcut("rider", "  ")]);
+        var errors = _sut.Validate([new NavShortcut("rider", "  ")], []);
 
         Assert.Contains(errors, e => e.Contains("no path"));
+    }
+
+    [Fact]
+    public void Validate_ValidCommands_ReturnsNoErrors()
+    {
+        var errors = _sut.Validate([], [new NavCommand("bot", @"python ""C:\bot.py""")]);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_CommandWithNoCommandLine_ReportsError()
+    {
+        var errors = _sut.Validate([], [new NavCommand("bot", "  ")]);
+
+        Assert.Contains(errors, e => e.Contains("no command line"));
+    }
+
+    [Fact]
+    public void Validate_InvalidCommandName_ReportsError()
+    {
+        var errors = _sut.Validate([], [new NavCommand("2bot", "python x.py")]);
+
+        Assert.Contains(errors, e => e.Contains("not a valid name"));
+    }
+
+    [Fact]
+    public void Validate_NameUsedByBothShortcutAndCommand_ReportsDuplicate()
+    {
+        // Directory and command functions share one shell namespace, so a name
+        // cannot belong to both.
+        var errors = _sut.Validate(
+            [new NavShortcut("bridge", @"C:\a")],
+            [new NavCommand("Bridge", "python bridge.py")]);
+
+        Assert.Contains(errors, e => e.Contains("Duplicate"));
     }
 }

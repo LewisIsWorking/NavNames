@@ -24,5 +24,16 @@ public sealed class ZoxideConfigGenerator : IShellConfigGenerator
         return sb.ToString().TrimEnd();
     }
 
+    // zoxide tracks directories only; command shortcuts have nowhere to go here.
+    // Emit a visible note (never a silent drop) so the user knows why.
+    public string GenerateCommands(IReadOnlyList<NavCommand> commands)
+    {
+        if (commands.Count == 0)
+            return string.Empty;
+
+        var plural = commands.Count == 1 ? "command shortcut" : "command shortcuts";
+        return $"# {commands.Count} {plural} not exported - zoxide handles directories only.";
+    }
+
     private static string Escape(string value) => value.Replace("'", "''");
 }

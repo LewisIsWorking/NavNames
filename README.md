@@ -1,10 +1,12 @@
 # NavNames
 
-**Name your folders once, jump to them from any shell.**
+**Name your folders and commands once, use them from any shell.**
 
 NavNames is a small cross-platform desktop app (Avalonia / .NET 10) that lets you curate
-**name → folder path** shortcuts in a GUI, then generates the matching shell config for you. Type
-`rider` instead of `cd C:\Users\you\RiderProjects`, `proj` to list everything, `info` for a cheat-sheet.
+**name → folder path** *and* **name → command** shortcuts in a GUI, then generates the matching shell
+config for you. Type `rider` instead of `cd C:\Users\you\RiderProjects`, `proj` to list folders,
+`info` for a cheat-sheet — or bind `voicebridge` to `python "C:\...\voice_bridge.py"` and just type
+`voicebridge` (extra arguments are forwarded), with `cmds` to list them.
 
 ## Why not just use a CLI tool?
 
@@ -14,12 +16,23 @@ it's a **GUI + shell-config generator**, not another terminal-only bookmarker. Y
 visually and NavNames writes the correct shell code into your profile — with your own
 `shortcuts.json` as the source of truth.
 
+## Two kinds of shortcut
+
+- **Folder shortcuts** — `name → folder path`. Typing the name `cd`s there; stored in
+  `%APPDATA%\NavNames\shortcuts.json`.
+- **Command shortcuts** — `name → command line`. Typing the name *runs* the command and forwards any
+  extra arguments (e.g. `voicebridge --debug`); stored in `%APPDATA%\NavNames\commands.json`. List
+  them with `cmds`/`commands`.
+
+Names share one shell-function namespace, so a name can't be both a folder and a command — the app
+validates that for you. (Zoxide export covers folders only and tells you when commands were skipped.)
+
 ## How it works
 
-1. Shortcuts live in `%APPDATA%\NavNames\shortcuts.json` — the single source of truth.
-2. On **Save**, NavNames generates PowerShell helpers (an ordered `$NavNames` map, a `proj`
-   dispatcher with tab-completion, one bare-word function per shortcut, and an `info`/`shortcuts`
-   table).
+1. Shortcuts live in `%APPDATA%\NavNames\shortcuts.json` and `commands.json` — the single sources of truth.
+2. On **Save**, NavNames generates PowerShell helpers: an ordered `$NavNames` map with a `proj`
+   dispatcher + tab-completion, one bare-word function per folder shortcut, an `info`/`shortcuts`
+   table, plus a `$NavCommands` map with one run-function per command and a `cmds` listing.
 3. That script is written into a **marker-delimited managed block** in your PowerShell profile:
 
    ```powershell

@@ -83,4 +83,41 @@ public class PowerShellConfigGeneratorTests
 
         Assert.Contains("\nfunction proj {", script.ReplaceLineEndings("\n"));
     }
+
+    [Fact]
+    public void GenerateCommands_EmptyList_ReturnsEmptyString()
+    {
+        Assert.Equal(string.Empty, _sut.GenerateCommands([]));
+    }
+
+    [Fact]
+    public void GenerateCommands_EmitsOrderedMapAndRunLoop()
+    {
+        var script = _sut.GenerateCommands([
+            new NavCommand("bridge", @"python ""C:\bot\voice_bridge.py""")
+        ]);
+
+        Assert.Contains("$NavCommands = [ordered]@{", script);
+        Assert.Contains(@"bridge = 'python ""C:\bot\voice_bridge.py""'", script);
+        Assert.Contains("foreach ($key in $NavCommands.Keys)", script);
+        // @args forwards extra arguments to the saved command.
+        Assert.Contains("@args", script);
+    }
+
+    [Fact]
+    public void GenerateCommands_IncludesCmdsListing()
+    {
+        var script = _sut.GenerateCommands([new NavCommand("bridge", "python x.py")]);
+
+        Assert.Contains("function cmds", script);
+        Assert.Contains("function commands", script);
+    }
+
+    [Fact]
+    public void GenerateCommands_EscapesSingleQuotesInCommand()
+    {
+        var script = _sut.GenerateCommands([new NavCommand("greet", "echo 'hi'")]);
+
+        Assert.Contains("greet = 'echo ''hi'''", script);
+    }
 }

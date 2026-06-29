@@ -49,4 +49,23 @@ public class ZoxideConfigGeneratorTests
         Assert.StartsWith("# Seed zoxide", script);
         Assert.DoesNotContain("zoxide add", script);
     }
+
+    [Fact]
+    public void GenerateCommands_EmptyList_ReturnsEmptyString()
+    {
+        Assert.Equal(string.Empty, _sut.GenerateCommands([]));
+    }
+
+    [Fact]
+    public void GenerateCommands_WithCommands_EmitsVisibleSkipNote()
+    {
+        // zoxide is directories-only; commands must not be silently dropped.
+        var script = _sut.GenerateCommands([
+            new NavCommand("a", "echo a"),
+            new NavCommand("b", "echo b")
+        ]);
+
+        Assert.Contains("2 command shortcuts not exported", script);
+        Assert.DoesNotContain("echo a", script);
+    }
 }

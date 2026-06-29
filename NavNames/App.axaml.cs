@@ -42,6 +42,8 @@ public partial class App : Application
         services.AddSingleton<IFileSystem, SystemFileSystem>();
         services.AddSingleton<IShortcutStore>(sp =>
             new JsonShortcutStore(sp.GetRequiredService<IFileSystem>()));
+        services.AddSingleton<ICommandStore>(sp =>
+            new JsonCommandStore(sp.GetRequiredService<IFileSystem>()));
         services.AddSingleton<IManagedBlockWriter, ManagedBlockWriter>();
         services.AddSingleton<IShortcutValidator, ShortcutValidator>();
         services.AddSingleton<IShortcutImporter, ShortcutImporter>();
@@ -55,6 +57,9 @@ public partial class App : Application
             new ShellTarget("Zoxide (seed)", new ZoxideConfigGenerator(), new PowerShellProfileLocator())
         ]);
 
+        // One section VM per window (transient), each owning its own editable list.
+        services.AddTransient<ShortcutsSectionViewModel>();
+        services.AddTransient<CommandsSectionViewModel>();
         services.AddTransient<MainWindowViewModel>();
 
         return services;
