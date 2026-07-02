@@ -17,9 +17,19 @@
                 <TextBlock Text="Name your folders and commands once, use them from any shell."
                            Opacity="0.7" />
             </StackPanel>
-            <TextBlock Grid.Column="1" Text="{Binding AppVersion}"
-                       VerticalAlignment="Top" Opacity="0.6" FontSize="12"
-                       ToolTip.Tip="Installed NavNames version" />
+            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right">
+                <TextBlock Text="{Binding AppVersion}" HorizontalAlignment="Right"
+                           Opacity="0.6" FontSize="12"
+                           ToolTip.Tip="Installed NavNames version" />
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
+                            IsVisible="{Binding Update.IsUpdateAvailable}">
+                    <TextBlock Text="{Binding Update.Message}" VerticalAlignment="Center"
+                               Opacity="0.85" FontSize="12" />
+                    <Button Content="Restart &amp; update"
+                            Command="{Binding Update.ApplyCommand}" Classes="accent"
+                            ToolTip.Tip="Restart NavNames to apply the downloaded update" />
+                </StackPanel>
+            </StackPanel>
         </Grid>
 
         <!-- Target shell + profile path -->

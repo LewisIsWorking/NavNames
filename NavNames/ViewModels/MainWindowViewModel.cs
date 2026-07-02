@@ -25,6 +25,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public ShortcutsSectionViewModel Shortcuts { get; }
     public CommandsSectionViewModel Commands { get; }
+    public UpdateViewModel Update { get; }
 
     // Shown in the header so the running build is always visible (tracks the csproj).
     public string AppVersion { get; } = NavNames.AppInfo.Version;
@@ -45,7 +46,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IFileSystem fileSystem,
         IShortcutImporter importer,
         ShortcutsSectionViewModel shortcuts,
-        CommandsSectionViewModel commands)
+        CommandsSectionViewModel commands,
+        UpdateViewModel update)
     {
         _store = store;
         _commandStore = commandStore;
@@ -56,6 +58,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         Shortcuts = shortcuts;
         Commands = commands;
+        Update = update;
         Shortcuts.Changed += (_, _) => RefreshPreview();
         Commands.Changed += (_, _) => RefreshPreview();
 
@@ -67,6 +70,9 @@ public partial class MainWindowViewModel : ViewModelBase
         Commands.Load(_commandStore.Load());
 
         RefreshPreview();
+
+        // Background update check; harmless (no-op) for dev/non-installed runs.
+        _ = Update.CheckAsync();
     }
 
     // Switching shells retargets the profile path and regenerates the preview.

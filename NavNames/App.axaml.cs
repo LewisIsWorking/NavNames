@@ -48,6 +48,7 @@ public partial class App : Application
         services.AddSingleton<IShortcutValidator, ShortcutValidator>();
         services.AddSingleton<IShortcutImporter, ShortcutImporter>();
         services.AddSingleton<IFolderPickerService, AvaloniaFolderPickerService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
 
         // One entry per supported target; the first is the default selection.
         services.AddSingleton<IReadOnlyList<ShellTarget>>(_ =>
@@ -60,6 +61,7 @@ public partial class App : Application
         // One section VM per window (transient), each owning its own editable list.
         services.AddTransient<ShortcutsSectionViewModel>();
         services.AddTransient<CommandsSectionViewModel>();
+        services.AddTransient<UpdateViewModel>();
         services.AddTransient<MainWindowViewModel>();
 
         return services;

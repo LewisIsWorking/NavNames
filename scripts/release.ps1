@@ -16,7 +16,8 @@
 [CmdletBinding()]
 param(
     [string]$Version,
-    [switch]$SkipTests
+    [switch]$SkipTests,
+    [switch]$Publish
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,4 +72,22 @@ vpk pack `
 Write-Host "Done. Artefacts in $releasesDir" -ForegroundColor Green
 if (Test-Path $releasesDir) {
     Get-ChildItem $releasesDir | Select-Object Name, @{N = 'MB'; E = { [math]::Round($_.Length / 1MB, 1) } }
+}
+
+# Publish to GitHub Releases so installed apps can auto-update (Velopack GithubSource).
+# Token comes from the gh CLI so nothing is hardcoded; requires `gh auth login` first.
+if ($Publish) {
+    $tag = "v$Version"
+    Write-Host "Publishing $tag to GitHub Releases..." -ForegroundColor Cyan
+    $token = (gh auth token).Trim()
+    if (-not $token) { throw 'No GitHub token from `gh auth token`. Run `gh auth login` first.' }
+
+    vpk upload github `
+        --repoUrl 'https://github.com/LewisIsWorking/NavNames' `
+        --token $token `
+        --publish `
+        --releaseName "NavNames $tag" `
+        --tag $tag
+
+    Write-Host "Published $tag." -ForegroundColor Green
 }
