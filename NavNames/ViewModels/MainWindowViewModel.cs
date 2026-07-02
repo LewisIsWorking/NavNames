@@ -26,6 +26,9 @@ public partial class MainWindowViewModel : ViewModelBase
     public ShortcutsSectionViewModel Shortcuts { get; }
     public CommandsSectionViewModel Commands { get; }
 
+    // Shown in the header so the running build is always visible (tracks the csproj).
+    public string AppVersion { get; } = NavNames.AppInfo.Version;
+
     public IReadOnlyList<ShellTarget> ShellTargets { get; }
 
     [ObservableProperty] private ShellTarget _selectedShellTarget;

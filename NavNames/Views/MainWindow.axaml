@@ -11,11 +11,16 @@
     <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,*,Auto,Auto">
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,12">
-            <TextBlock Text="NavNames" FontSize="24" FontWeight="SemiBold" />
-            <TextBlock Text="Name your folders and commands once, use them from any shell."
-                       Opacity="0.7" />
-        </StackPanel>
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+            <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Text="NavNames" FontSize="24" FontWeight="SemiBold" />
+                <TextBlock Text="Name your folders and commands once, use them from any shell."
+                           Opacity="0.7" />
+            </StackPanel>
+            <TextBlock Grid.Column="1" Text="{Binding AppVersion}"
+                       VerticalAlignment="Top" Opacity="0.6" FontSize="12"
+                       ToolTip.Tip="Installed NavNames version" />
+        </Grid>
 
         <!-- Target shell + profile path -->
         <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,0,0,12" ColumnSpacing="12">
