@@ -5,7 +5,7 @@
         x:DataType="vm:MainWindowViewModel"
         Width="820" Height="760"
         MinWidth="640" MinHeight="540"
-        Title="NavNames"
+        Title="{Binding AppVersion, StringFormat='NavNames {0}'}"
         WindowStartupLocation="CenterScreen">
 
     <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,*,Auto,Auto">
