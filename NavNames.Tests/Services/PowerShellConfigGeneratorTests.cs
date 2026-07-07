@@ -85,6 +85,16 @@ public class PowerShellConfigGeneratorTests
     }
 
     [Fact]
+    public void Generate_ShowNavNamesRowsAreArrayWrapped_SoAppendWorksWithZeroOrOneShortcut()
+    {
+        // Regression: a bare pipeline yields $null (0 shortcuts) or a scalar (1),
+        // and `$rows += ...` on a scalar throws op_Addition. @(...) forces an array.
+        var script = _sut.Generate([]);
+
+        Assert.Contains("$rows = @($NavNames.GetEnumerator()", script);
+    }
+
+    [Fact]
     public void GenerateCommands_EmptyList_ReturnsEmptyString()
     {
         Assert.Equal(string.Empty, _sut.GenerateCommands([]));

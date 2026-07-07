@@ -82,7 +82,11 @@ if ($Publish) {
     $token = (gh auth token).Trim()
     if (-not $token) { throw 'No GitHub token from `gh auth token`. Run `gh auth login` first.' }
 
+    # --outputDir is REQUIRED: without it vpk defaults to .\Releases relative to the
+    # current directory, which may be a different repo's worktree and upload the wrong
+    # app's artifacts. Always pin it to this repo's absolute Releases path.
     vpk upload github `
+        --outputDir $releasesDir `
         --repoUrl 'https://github.com/LewisIsWorking/NavNames' `
         --token $token `
         --publish `

@@ -78,10 +78,12 @@ public sealed class PowerShellConfigGenerator : IShellConfigGenerator
         }
 
         # info / shortcuts -> print every shortcut and where it goes.
+        # @(...) forces an array so += works even when 0 or 1 shortcuts are defined
+        # (a bare pipeline yields $null / a scalar, and scalar += throws op_Addition).
         function Show-NavNames {
-            $rows = $NavNames.GetEnumerator() | ForEach-Object {
+            $rows = @($NavNames.GetEnumerator() | ForEach-Object {
                 [pscustomobject]@{ Shortcut = $_.Key; 'Goes To' = $_.Value }
-            }
+            })
             $rows += [pscustomobject]@{ Shortcut = 'proj <key>'; 'Goes To' = 'jump by key (Tab-completes); bare proj lists all' }
             $rows += [pscustomobject]@{ Shortcut = 'info / shortcuts'; 'Goes To' = 'show this table' }
             $rows | Format-Table -AutoSize
