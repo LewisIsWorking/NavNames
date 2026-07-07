@@ -6,6 +6,7 @@
         Width="820" Height="760"
         MinWidth="640" MinHeight="540"
         Title="{Binding AppVersion, StringFormat='NavNames {0}'}"
+        Icon="avares://NavNames/Assets/appicon-256.png"
         WindowStartupLocation="CenterScreen">
 
     <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,*,Auto,Auto">
