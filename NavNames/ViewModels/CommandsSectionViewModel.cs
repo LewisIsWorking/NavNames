@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 using NavNames.Core.Models;
+using NavNames.Services.Interfaces;
 
 namespace NavNames.ViewModels;
 
@@ -15,6 +16,10 @@ namespace NavNames.ViewModels;
 /// </summary>
 public partial class CommandsSectionViewModel : ViewModelBase
 {
+    private readonly IExternalLinkService _links;
+
+    public CommandsSectionViewModel(IExternalLinkService links) => _links = links;
+
     public ObservableCollection<CommandItemViewModel> Items { get; } = [];
 
     /// <summary>Raised on add, remove, or any row edit.</summary>
@@ -34,6 +39,13 @@ public partial class CommandsSectionViewModel : ViewModelBase
         Items.Add(NewItem());
         Raise();
     }
+
+    /// <summary>
+    /// Opens the recipes guide. Command shortcuts are the feature people struggle to
+    /// think of uses for, so the examples are surfaced right where they're authored.
+    /// </summary>
+    [RelayCommand]
+    private Task OpenRecipes() => _links.OpenAsync(AppLinks.RecipesUrl);
 
     private CommandItemViewModel NewItem(string name = "", string command = "")
     {

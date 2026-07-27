@@ -48,6 +48,7 @@ public partial class App : Application
         services.AddSingleton<IShortcutValidator, ShortcutValidator>();
         services.AddSingleton<IShortcutImporter, ShortcutImporter>();
         services.AddSingleton<IFolderPickerService, AvaloniaFolderPickerService>();
+        services.AddSingleton<IExternalLinkService, AvaloniaExternalLinkService>();
         services.AddSingleton<IUpdateService, UpdateService>();
 
         // One entry per supported target; the first is the default selection.
