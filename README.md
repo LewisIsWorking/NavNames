@@ -27,6 +27,13 @@ visually and NavNames writes the correct shell code into your profile — with y
 Names share one shell-function namespace, so a name can't be both a folder and a command — the app
 validates that for you. (Zoxide export covers folders only and tells you when commands were skipped.)
 
+## Recipes
+
+See **[docs/recipes.md](docs/recipes.md)** for real command shortcuts worth stealing, including
+`PsUpdate` — a one-word PowerShell self-upgrade, and a worked example of why the exact flags you bind
+to a name matter (the same `winget` command fails with a bare `1603` if you add `--silent`, and
+succeeds without it).
+
 ## How it works
 
 1. Shortcuts live in `%APPDATA%\NavNames\shortcuts.json` and `commands.json` — the single sources of truth.
